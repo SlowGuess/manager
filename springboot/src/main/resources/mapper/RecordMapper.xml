@@ -16,6 +16,7 @@
         <where>
             <if test="id != null"> and id= #{id}</if>
             <if test="userId != null"> and record.user_id= #{userId}</if>
+            <if test="doctorId != null"> and record.doctor_id= #{doctorId}</if>
             <if test="inhospital != null"> and inhospital= #{inhospital}</if>
         </where>
         order by id desc

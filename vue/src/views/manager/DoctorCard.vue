@@ -69,6 +69,10 @@ export default {
   },
   methods: {
     reserve(doctorId) {
+      if (this.user.role !== 'USER'){
+        this.$message.warning('您的角色不支持挂号操作')
+        return
+      }
       let data = {
         userId: this.user.id,
         doctorId: doctorId

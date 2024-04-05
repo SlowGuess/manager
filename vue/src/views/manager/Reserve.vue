@@ -76,7 +76,7 @@ export default {
       let data = {
         userId: row.userId,
         doctorId: row.doctorId,
-        inhospitalRecord:'否'
+
       }
       this.$request.post('/record/add',data).then(res =>{
         if (res.code === '200'){

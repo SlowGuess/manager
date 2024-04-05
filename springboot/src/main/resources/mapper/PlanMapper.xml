@@ -16,6 +16,7 @@
         <where>
             <if test="id != null"> and id= #{id}</if>
             <if test="week != null"> and week= #{week}</if>
+            <if test="doctorId != null"> and plan.doctor_id= #{doctorId}</if>
         </where>
         order by id desc
     </select>

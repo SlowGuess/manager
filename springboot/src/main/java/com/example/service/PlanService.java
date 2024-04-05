@@ -3,6 +3,7 @@ package com.example.service;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.example.common.enums.ResultCodeEnum;
+import com.example.common.enums.RoleEnum;
 import com.example.entity.Account;
 import com.example.entity.Plan;
 import com.example.exception.CustomException;
@@ -78,6 +79,11 @@ public class PlanService {
      * 分页查询
      */
     public PageInfo<Plan> selectPage(Plan plan, Integer pageNum, Integer pageSize) {
+        Account currentUser = TokenUtils.getCurrentUser();
+        if (RoleEnum.DOCTOR.name().equals(currentUser.getRole())){
+            plan.setDoctorId(currentUser.getId());
+        }
+
         PageHelper.startPage(pageNum, pageSize);
         List<Plan> list = planMapper.selectAll(plan);
         return PageInfo.of(list);

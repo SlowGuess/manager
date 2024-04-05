@@ -6,27 +6,22 @@
       <el-button type="warning" plain style="margin-left: 10px" @click="reset">重置</el-button>
     </div>
 
-
     <div class="table">
       <el-table :data="tableData" stripe  @selection-change="handleSelectionChange">
-<!--        <el-table-column type="selection" width="55" align="center"></el-table-column>-->
+        <el-table-column type="selection" width="55" align="center"></el-table-column>
         <el-table-column prop="id" label="序号" width="80" align="center" sortable></el-table-column>
         <el-table-column prop="userName" label="患者姓名" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="doctorName" label="医生姓名" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="time" label="就诊时间"></el-table-column>
-        <el-table-column prop="medicalRecord" label="医嘱病历">
-          <template v-slot="scope">
-            <el-button type="success" size="mini" @click="viewEditor(scope.row.medicalRecord)">查看病历</el-button>
-          </template>
-        </el-table-column>
+        <el-table-column prop="hosStatus" label="住院状态"></el-table-column>
+        <el-table-column prop="room" label="房号" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="price" label="费用"></el-table-column>
+        <el-table-column prop="status" label="缴费状态"></el-table-column>
+        <el-table-column prop="medicine" label="是否医保"></el-table-column>
 
-        <el-table-column prop="inhospital" label="是否住院"></el-table-column>
-        <el-table-column prop="inhospitalRecord" label="是否住院登记"></el-table-column>
 
         <el-table-column label="操作" width="180" align="center">
           <template v-slot="scope">
-            <el-button plain type="primary" v-if="user.role === 'DOCTOR'" @click="handleEdit(scope.row)" size="mini">填写医嘱病历</el-button>
-            <el-button plain type="primary" v-if="user.role === 'ADMIN' && scope.row.inhospital === '是' && scope.row.inhospitalRecord === '否' " @click="registration(scope.row)" size="mini">住院登记</el-button>
+            <el-button plain type="primary" @click="handleEdit(scope.row)" size="mini">编辑</el-button>
+            <el-button plain type="danger" size="mini" @click=del(scope.row.id)>删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -45,15 +40,30 @@
     </div>
 
 
-    <el-dialog title="医嘱病历填写" :visible.sync="fromVisible" width="60%" :close-on-click-modal="false" destroy-on-close @close="cancel">
+    <el-dialog title="信息" :visible.sync="fromVisible" width="40%" :close-on-click-modal="false" destroy-on-close>
       <el-form label-width="100px" style="padding-right: 50px" :model="form" :rules="rules" ref="formRef">
-        <el-form-item prop="medicalRecord" label="医嘱病历">
-          <div id="editor"></div>
+        <el-form-item prop="room" label="房号">
+          <el-input v-model="form.room" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item prop="inhospital" label="是否住院">
-          <el-select v-model="form.inhospital" placeholder="请选择" style="width: 100%;">
+        <el-form-item prop="price" label="费用">
+          <el-input v-model="form.price" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item prop="status" label="缴费状态">
+          <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%;">
+            <el-option label="未缴费" value="未缴费"></el-option>
+            <el-option label="已缴费" value="已缴费"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item prop="medicine" label="是否医保">
+          <el-select v-model="form.medicine" placeholder="请选择" style="width: 100%;">
             <el-option label="是" value="是"></el-option>
             <el-option label="否" value="否"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item prop="hosStatus" label="住院状态">
+          <el-select v-model="form.hosStatus" placeholder="请选择状态" style="width: 100%;">
+            <el-option label="住院中" value="住院中"></el-option>
+            <el-option label="已出院" value="已出院"></el-option>
           </el-select>
         </el-form-item>
       </el-form>
@@ -64,31 +74,12 @@
     </el-dialog>
 
 
-    <el-dialog title="医嘱病历" :visible.sync="editorVisible" width="50%" :close-on-click-modal="false" destroy-on-close>
-      <div v-html="this.viewContent" class="w-e-text"></div>
-    </el-dialog>
-
-
   </div>
 </template>
 
 <script>
-import E from 'wangeditor'
-let editor
-function initWangEditor(content) {	setTimeout(() => {
-  if (!editor) {
-    editor = new E('#editor')
-    editor.config.placeholder = '请输入内容'
-    editor.config.uploadFileName = 'file'
-    editor.config.uploadImgServer = 'http://localhost:9090/files/wang/upload'
-    editor.create()
-  }
-  editor.txt.html(content)
-}, 0)
-}
-
 export default {
-  name: "Record",
+  name: "Registration",
   data() {
     return {
       tableData: [],  // 所有的数据
@@ -100,70 +91,50 @@ export default {
       form: {},
       user: JSON.parse(localStorage.getItem('xm-user') || '{}'),
       rules: {
-        inhospital: [
-          {required: true, message: '请选择是否住院', trigger: 'blur'},
+        title: [
+          {required: true, message: '请输入标题', trigger: 'blur'},
         ],
+        content: [
+          {required: true, message: '请输入内容', trigger: 'blur'},
+        ]
       },
-      ids: [],
-      viewContent:null,
-      editorVisible: false,
+      ids: []
     }
   },
   created() {
     this.load(1)
   },
   methods: {
-    registration(row){
-      let data = JSON.parse(JSON.stringify(row))
-      data.inhospitalRecord = '是'
-      this.$request.put('record/update',data).then(res =>{
-        if (res.code === '200'){
-          this.load(1)
-          this.toRegistration(row.userId)
-        }
-      })
-    },
-    toRegistration(userId){
-      let data = {
-        userId : userId,
-        hosStatus:'住院中'
-      }
-      this.$request.post('/registration/add',data).then(res =>{
-        if(res.code === '200'){
-          this.$message.success('登记成功')
-        }else{
-          this.$message.error(res.msg)
-        }
-      })
-    },
-    viewEditor(content){
-      this.viewContent = content
-      this.editorVisible = true
-    },
-    cancel(){
-      this.fromVisible = false
-      location.href = '/record'
+    handleAdd() {   // 新增数据
+      this.form = {}  // 新增数据的时候清空数据
+      this.fromVisible = true   // 打开弹窗
     },
     handleEdit(row) {   // 编辑数据
       this.form = JSON.parse(JSON.stringify(row))  // 给form对象赋值  注意要深拷贝数据
-      initWangEditor(this.form.medicalRecord || '')
       this.fromVisible = true   // 打开弹窗
     },
     save() {   // 保存按钮触发的逻辑  它会触发新增或者更新
-      this.form.medicalRecord = editor.txt.html()
-      this.$request.put('/record/update',this.form).then(res =>{
-        if (res.code === '200') {  // 表示成功保存
-          this.$message.success('保存成功')
-          this.load(1)
-          this.fromVisible = false
-        } else {
-          this.$message.error(res.msg)  // 弹出错误的信息
+      this.$refs.formRef.validate((valid) => {
+        if (valid) {
+          this.$request({
+            url: this.form.id ? '/registration/update' : '/registration/add',
+            method: this.form.id ? 'PUT' : 'POST',
+            data: this.form
+          }).then(res => {
+            if (res.code === '200') {  // 表示成功保存
+              this.$message.success('保存成功')
+              this.load(1)
+              this.fromVisible = false
+            } else {
+              this.$message.error(res.msg)  // 弹出错误的信息
+            }
+          })
         }
       })
     },
     del(id) {   // 单个删除
       this.$confirm('您确定删除吗？', '确认删除', {type: "warning"}).then(response => {
-        this.$request.delete('/record/delete/' + id).then(res => {
+        this.$request.delete('/registration/delete/' + id).then(res => {
           if (res.code === '200') {   // 表示操作成功
             this.$message.success('操作成功')
             this.load(1)
@@ -183,7 +154,7 @@ export default {
         return
       }
       this.$confirm('您确定批量删除这些数据吗？', '确认删除', {type: "warning"}).then(response => {
-        this.$request.delete('/record/delete/batch', {data: this.ids}).then(res => {
+        this.$request.delete('/registration/delete/batch', {data: this.ids}).then(res => {
           if (res.code === '200') {   // 表示操作成功
             this.$message.success('操作成功')
             this.load(1)
@@ -196,7 +167,7 @@ export default {
     },
     load(pageNum) {  // 分页查询
       if (pageNum) this.pageNum = pageNum
-      this.$request.get('/record/selectPage', {
+      this.$request.get('/registration/selectPage', {
         params: {
           pageNum: this.pageNum,
           pageSize: this.pageSize,

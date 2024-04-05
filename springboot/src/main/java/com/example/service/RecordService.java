@@ -2,6 +2,8 @@ package com.example.service;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
+import com.example.common.enums.RoleEnum;
+import com.example.common.enums.StatusEnum;
 import com.example.entity.Account;
 import com.example.entity.Record;
 import com.example.mapper.RecordMapper;
@@ -33,6 +35,7 @@ public class RecordService {
         record.setTime(time);
         List<Record> records = recordMapper.selectAll(record);
         if (CollectionUtil.isEmpty(records)){
+            record.setInhospitalRecord(StatusEnum.NO.status);
             recordMapper.insert(record);
         }
 
@@ -79,6 +82,13 @@ public class RecordService {
      * 分页查询
      */
     public PageInfo<Record> selectPage(Record record, Integer pageNum, Integer pageSize) {
+        Account currentUser = TokenUtils.getCurrentUser();
+        if (RoleEnum.USER.name().equals(currentUser.getRole())){
+            record.setUserId(currentUser.getId());
+        }
+        if (RoleEnum.DOCTOR.name().equals(currentUser.getRole())){
+            record.setDoctorId(currentUser.getId());
+        }
         PageHelper.startPage(pageNum, pageSize);
         List<Record> list = recordMapper.selectAll(record);
         return PageInfo.of(list);
