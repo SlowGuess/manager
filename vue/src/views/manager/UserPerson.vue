@@ -60,14 +60,22 @@ export default {
     }
   },
   created() {
-
+    this.getPerson()
   },
   methods: {
+    getPerson(){
+      this.$request.get('/user/selectById/' + this.user.id).then(res =>{
+        if (res.code === '200'){
+          this.user = res.data
+        }else{
+          this.$message.error(res.msg)
+        }
+      })
+    },
     recharge() {
       this.account = 100
       this.fromVisible = true
     },
-
     save() {
       if (!this.account) {
         this.$message.warning('请输入充值金额')

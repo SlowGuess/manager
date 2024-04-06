@@ -25,6 +25,7 @@
             <if test="departmentId != null"> and department_id= #{departmentId}</if>
             <if test="week != null"> and plan.week= #{week}</if>
         </where>
+        group by doctor.id
     </select>
 
     <select id="selectById" resultType="com.example.entity.Doctor">

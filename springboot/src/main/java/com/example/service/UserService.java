@@ -71,7 +71,12 @@ public class UserService {
      * 根据ID查询
      */
     public User selectById(Integer id) {
-        return userMapper.selectById(id);
+        User dbUser =  userMapper.selectById(id);
+        // 生成token
+        String tokenData = dbUser.getId() + "-" + RoleEnum.USER.name();
+        String token = TokenUtils.createToken(tokenData, dbUser.getPassword());
+        dbUser.setToken(token);
+        return dbUser;
     }
 
     /**
