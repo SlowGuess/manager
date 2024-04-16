@@ -32,6 +32,7 @@ const routes = [
       { path: 'reserve', name: 'Reserve', meta: { name: '患者挂号' }, component: () => import('../views/manager/Reserve') },
       { path: 'record', name: 'Record', meta: { name: '我的就诊' }, component: () => import('../views/manager/Record') },
       { path: 'registration', name: 'Registration', meta: { name: '住院登记' }, component: () => import('../views/manager/Registration') },
+      { path: 'diagnosis', name: 'Diagnosis', meta: { name: 'AI诊断肺炎' }, component: () => import('../views/manager/Diagnosis') },
 
     ]
   },
@@ -47,6 +48,8 @@ const routes = [
   { path: '/login', name: 'Login', meta: { name: '登录' }, component: () => import('../views/Login.vue') },
   { path: '/register', name: 'Register', meta: { name: '注册' }, component: () => import('../views/Register.vue') },
   { path: '*', name: 'NotFound', meta: { name: '无法访问' }, component: () => import('../views/404.vue') },
+
+  // { path: '/invoke-flask', name: 'Invoke-flask', meta: { name: '访问flask' }, component: () => import('../views/Flask.vue') },
 ]
 
 const router = new VueRouter({

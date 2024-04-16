@@ -33,11 +33,12 @@
     <div class="manager-main">
       <!--  侧边栏  -->
       <div class="manager-main-left">
-        <el-menu :default-openeds="['info', 'reserve','user']" router style="border: none" :default-active="$route.path">
+        <el-menu :default-openeds="['info', 'reserve','user','diagnosis']" router style="border: none" :default-active="$route.path">
           <el-menu-item index="/home">
             <i class="el-icon-s-home"></i>
             <span slot="title">系统首页</span>
           </el-menu-item>
+
           <el-submenu index="info" v-if="user.role !== 'USER' " >
             <template slot="title">
               <i class="el-icon-menu"></i><span>信息管理</span>
@@ -65,6 +66,14 @@
             <el-menu-item index="/doctor">医生信息</el-menu-item>
             <el-menu-item index="/user">患者信息</el-menu-item>
           </el-submenu>
+
+          <el-submenu index="diagnosis">
+            <template slot="title">
+              <i class="el-icon-menu"></i><span>自助诊病</span>
+            </template>
+            <el-menu-item index="/diagnosis">AI诊断肺炎</el-menu-item>
+          </el-submenu>
+
         </el-menu>
       </div>
 
