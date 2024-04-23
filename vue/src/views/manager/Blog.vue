@@ -1,7 +1,9 @@
 <template>
   <div>
     <div class="search">
-      <el-input placeholder="请输入账号查询" style="width: 200px" v-model="username"></el-input>
+      <el-input placeholder="请输入标题查询" style="width: 200px; margin-right: 10px" v-model="title"></el-input>
+      <el-input placeholder="请输入分类查询" style="width: 200px; margin-right: 10px" v-model="categoryName"></el-input>
+      <el-input placeholder="请输入用户名称查询" style="width: 200px" v-model="userName"></el-input>
       <el-button type="info" plain style="margin-left: 10px" @click="load(1)">查询</el-button>
       <el-button type="warning" plain style="margin-left: 10px" @click="reset">重置</el-button>
     </div>
@@ -11,25 +13,34 @@
       <el-button type="danger" plain @click="delBatch">批量删除</el-button>
     </div>
 
-    <div class="table">
+    <div class="table" v-if="user.role === 'ADMIN' ">
       <el-table :data="tableData" strip @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center"></el-table-column>
         <el-table-column prop="id" label="序号" width="70" align="center" sortable></el-table-column>
-        <el-table-column label="头像">
+        <el-table-column prop="title" label="标题" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="descr" label="简介" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="cover" label="封面">
           <template v-slot="scope">
             <div style="display: flex; align-items: center">
-              <el-image style="width: 40px; height: 40px; border-radius: 50%" v-if="scope.row.avatar"
-                        :src="scope.row.avatar" :preview-src-list="[scope.row.avatar]"></el-image>
+              <el-image style="width: 50px; height: 50px; border-radius: 5px" v-if="scope.row.cover"
+                        :src="scope.row.cover" :preview-src-list="[scope.row.cover]"></el-image>
             </div>
           </template>
         </el-table-column>
-
-        <el-table-column prop="username" label="账号"></el-table-column>
-        <el-table-column prop="name" label="姓名"></el-table-column>
-        <el-table-column prop="phone" label="电话"></el-table-column>
-        <el-table-column prop="email" label="邮箱"></el-table-column>
-        <el-table-column prop="role" label="角色"></el-table-column>
-        <el-table-column prop="account" label="余额"></el-table-column>
+        <el-table-column prop="categoryName" label="分类"></el-table-column>
+        <el-table-column prop="tags" label="标签">
+          <template v-slot="scope">
+            <el-tag v-for="item in JSON.parse(scope.row.tags || '[]')" :key="item" style="margin-right: 5px">{{ item }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="userName" label="发布人"></el-table-column>
+        <el-table-column prop="date" label="发布日期"></el-table-column>
+        <el-table-column prop="readCount" label="浏览量"></el-table-column>
+        <el-table-column label="查看内容">
+          <template v-slot="scope">
+            <el-button @click="preview(scope.row.content)">查看内容</el-button>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" align="center" width="180">
           <template v-slot="scope">
             <el-button size="mini" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
@@ -52,23 +63,46 @@
     </div>
 
 
-    <el-dialog title="管理员" :visible.sync="fromVisible" width="40%" :close-on-click-modal="false" destroy-on-close>
+    <el-dialog title="信息" :visible.sync="fromVisible" width="60%" :close-on-click-modal="false" destroy-on-close>
       <el-form :model="form" label-width="100px" style="padding-right: 50px" :rules="rules" ref="formRef">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="用户名"></el-input>
+        <el-form-item label="标题" prop="title">
+          <el-input v-model="form.title" placeholder="标题"></el-input>
         </el-form-item>
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="form.name" placeholder="姓名"></el-input>
+        <el-form-item label="简介" prop="descr">
+          <el-input type="textarea" v-model="form.descr" placeholder="简介"></el-input>
         </el-form-item>
-        <el-form-item label="电话" prop="phone">
-          <el-input v-model="form.phone" placeholder="电话"></el-input>
+        <el-form-item label="封面" prop="cover">
+          <el-upload
+              :action="$baseUrl + '/files/upload'"
+              :headers="{ token: user.token }"
+              list-type="picture"
+              :on-success="handleCoverSuccess"
+          >
+            <el-button type="primary">上传封面</el-button>
+          </el-upload>
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" placeholder="邮箱"></el-input>
+        <el-form-item label="分类" prop="categoryId">
+          <el-select v-model="form.categoryId" style="width: 100%">
+            <el-option v-for="item in categoryList" :key="item.id" :value="item.id" :label="item.name"></el-option>
+          </el-select>
         </el-form-item>
-
+        <el-form-item label="标签" prop="tags">
+          <el-select v-model="tagsArr" multiple filterable allow-create default-first-option style="width: 100%">
+            <el-option value="内科"></el-option>
+            <el-option value="外科"></el-option>
+            <el-option value="肺炎"></el-option>
+            <el-option value="健康"></el-option>
+            <el-option value="术后注意"></el-option>
+            <el-option value="预防措施"></el-option>
+            <el-option value="神经科"></el-option>
+            <el-option value="养生"></el-option>
+            <el-option value="儿童"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="内容" prop="content">
+          <div id="editor"></div>
+        </el-form-item>
       </el-form>
-
       <div slot="footer" class="dialog-footer">
         <el-button @click="fromVisible = false">取 消</el-button>
         <el-button type="primary" @click="save">确 定</el-button>
@@ -76,47 +110,76 @@
     </el-dialog>
 
 
+    <el-dialog title="文章内容" :visible.sync="fromVisible1" width="50%" :close-on-click-modal="false" destroy-on-close>
+      <div class="w-e-text">
+        <div v-html="content"></div>
+      </div>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="fromVisible1 = false">关 闭</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
+import E from "wangeditor"
+import hljs from 'highlight.js'
+
 export default {
-  name: "User",
+  name: "Blog",
   data() {
     return {
       tableData: [],  // 所有的数据
       pageNum: 1,   // 当前的页码
       pageSize: 10,  // 每页显示的个数
       total: 0,
-      username: null,
+      title: null,
+      categoryName: null,
+      userName: null,
       fromVisible: false,
       form: {},
       user: JSON.parse(localStorage.getItem('xm-user') || '{}'),
-      rules: {
-        username: [
-          {required: true, message: '请输入账号', trigger: 'blur'},
-        ]
-      },
-      ids: []
+      rules: {},
+      ids: [],
+      categoryList: [],
+      tagsArr: [],
+      editor: null,
+      content: '',
+      fromVisible1: false
     }
   },
   created() {
     this.load(1)
   },
   methods: {
+    preview(content) {
+      this.content = content
+      this.fromVisible1 = true
+    },
     handleAdd() {   // 新增数据
       this.form = {}  // 新增数据的时候清空数据
+      this.tagsArr = []
+      this.setRichText()
       this.fromVisible = true   // 打开弹窗
     },
     handleEdit(row) {   // 编辑数据
       this.form = JSON.parse(JSON.stringify(row))  // 给form对象赋值  注意要深拷贝数据
+      this.tagsArr = JSON.parse(this.form.tags || '[]')
       this.fromVisible = true   // 打开弹窗
+      this.setRichText()
+      setTimeout(() => {
+        this.editor.txt.html(this.form.content)
+      }, 0)
     },
     save() {   // 保存按钮触发的逻辑  它会触发新增或者更新
       this.$refs.formRef.validate((valid) => {
         if (valid) {
+          this.form.tags = JSON.stringify(this.tagsArr)  // 把json数组转换成json字符串存到数据库
+          this.form.content = this.editor.txt.html()
           this.$request({
-            url: this.form.id ? '/user/update' : '/user/add',
+            url: this.form.id ? '/blog/update' : '/blog/add',
             method: this.form.id ? 'PUT' : 'POST',
             data: this.form
           }).then(res => {
@@ -133,7 +196,7 @@ export default {
     },
     del(id) {   // 单个删除
       this.$confirm('您确定删除吗？', '确认删除', {type: "warning"}).then(response => {
-        this.$request.delete('/user/delete/' + id).then(res => {
+        this.$request.delete('/blog/delete/' + id).then(res => {
           if (res.code === '200') {   // 表示操作成功
             this.$message.success('操作成功')
             this.load(1)
@@ -145,7 +208,7 @@ export default {
       })
     },
     handleSelectionChange(rows) {   // 当前选中的所有的行数据
-      this.ids = rows.map(v => v.id)
+      this.ids = rows.map(v => v.id)   //  [1,2]
     },
     delBatch() {   // 批量删除
       if (!this.ids.length) {
@@ -153,7 +216,7 @@ export default {
         return
       }
       this.$confirm('您确定批量删除这些数据吗？', '确认删除', {type: "warning"}).then(response => {
-        this.$request.delete('/user/delete/batch', {data: this.ids}).then(res => {
+        this.$request.delete('/blog/delete/batch', {data: this.ids}).then(res => {
           if (res.code === '200') {   // 表示操作成功
             this.$message.success('操作成功')
             this.load(1)
@@ -166,27 +229,49 @@ export default {
     },
     load(pageNum) {  // 分页查询
       if (pageNum) this.pageNum = pageNum
-      this.$request.get('/user/selectPage', {
+      this.$request.get('/blog/selectPage', {
         params: {
           pageNum: this.pageNum,
           pageSize: this.pageSize,
-          username: this.username,
+          title: this.title,
+          categoryName: this.categoryName,
+          userName: this.userName,
         }
       }).then(res => {
         this.tableData = res.data?.list
         this.total = res.data?.total
       })
+
+      this.$request.get('/category/selectAll').then(res => {
+        this.categoryList = res.data || []
+      })
     },
     reset() {
-      this.username = null
+      this.title = null
+      this.categoryName = null
+      this.userName = null
       this.load(1)
     },
     handleCurrentChange(pageNum) {
       this.load(pageNum)
     },
-    handleAvatarSuccess(response, file, fileList) {
-      // 把头像属性换成上传的图片的链接
-      this.form.avatar = response.data
+    handleCoverSuccess(res) {
+      this.form.cover = res.data
+    },
+    setRichText() {
+      this.$nextTick(() => {
+        this.editor = new E(`#editor`)
+        this.editor.highlight = hljs
+        this.editor.config.uploadImgServer = this.$baseUrl + '/files/editor/upload'
+        this.editor.config.uploadFileName = 'file'
+        this.editor.config.uploadImgHeaders = {
+          token: this.user.token
+        }
+        this.editor.config.uploadImgParams = {
+          type: 'img',
+        }
+        this.editor.create()  // 创建
+      })
     },
   }
 }

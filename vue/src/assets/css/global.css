@@ -8,4 +8,20 @@ body {
 }
 a {
     text-decoration: none;
+    color: #333;
+}
+
+.line1{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.line2 {
+    word-break: break-all;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; /* 超出几行省略 */
+    overflow: hidden;
 }

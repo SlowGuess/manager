@@ -33,6 +33,9 @@ const routes = [
       { path: 'record', name: 'Record', meta: { name: '我的就诊' }, component: () => import('../views/manager/Record') },
       { path: 'registration', name: 'Registration', meta: { name: '住院登记' }, component: () => import('../views/manager/Registration') },
       { path: 'diagnosis', name: 'Diagnosis', meta: { name: 'AI诊断肺炎' }, component: () => import('../views/manager/Diagnosis') },
+      { path: 'blog', name: 'Blog', meta: { name: '博客信息' }, component: () => import('../views/manager/Blog') },
+      { path: 'category', name: 'Category', meta: { name: '博客分类' }, component: () => import('../views/manager/Category') },
+      { path: 'comment', name: 'Comment', meta: { name: '评论信息' }, component: () => import('../views/manager/Comment') },
 
     ]
   },
@@ -43,6 +46,9 @@ const routes = [
     children: [
       { path: 'home', name: 'Home', meta: { name: '系统首页' }, component: () => import('../views/front/Home') },
       { path: 'person', name: 'Person', meta: { name: '个人信息' }, component: () => import('../views/front/Person') },
+      { path: 'blogDetail', name: 'BlogDetail', meta: { name: '留言详情' }, component: () => import('../views/front/BlogDetail') },
+      { path: 'search', name: 'Search', meta: { name: '留言搜索' }, component: () => import('../views/front/Search') },
+
     ]
   },
   { path: '/login', name: 'Login', meta: { name: '登录' }, component: () => import('../views/Login.vue') },
@@ -76,5 +82,7 @@ const router = new VueRouter({
 //     next()
 //   }
 // })
+
+
 
 export default router
